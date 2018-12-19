@@ -1,0 +1,28 @@
+{
+  "name": "sockem",
+  "version": "0.0.1",
+  "description": "A wrapper around ActionCable to ensure eventual delivery",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo glhf && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/testdouble/sockem.git"
+  },
+  "keywords": [
+    "ActionCable",
+    "bad-ideas"
+  ],
+  "author": "Justin Searls <searls@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/testdouble/sockem/issues"
+  },
+  "homepage": "https://github.com/testdouble/sockem#readme",
+  "devDependencies": {},
+  "dependencies": {
+    "actioncable": "^5.2",
+    "lodash": "^4.17"
+  }
+}
