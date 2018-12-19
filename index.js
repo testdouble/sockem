@@ -1,5 +1,4 @@
 const ActionCable = require('actioncable')
-const _ = require('lodash')
 
 // app.ws - actioncable / websocket
 const app = {}
@@ -22,7 +21,7 @@ app.ws.subscriptionCallbacks = []
 app.ws.subscriptionConnected = false
 
 app.ws.callSubscriptionCallbacks = () => {
-  _.each(app.ws.subscriptionCallbacks, cb =>
+  app.ws.subscriptionCallbacks.forEach(cb =>
     cb(app.ws.subscription)
   )
   app.ws.subscriptionCallbacks = []
@@ -63,10 +62,10 @@ app.ws.subscribe = (connectionCb) => {
 
 app.ws.reconnect = () => {
   if (app.ws.subscription) {
-    const connection = _.get(app.ws, 'subscription.consumer.connection')
-    if (connection) {
-      if (!connection.isActive()) {
-        connection.reopen()
+    const consumer = app.ws.subscription.consumer
+    if (consumer && consumer.connection) {
+      if (!consumer.connection.isActive()) {
+        consumer.connection.reopen()
       }
     } else {
       app.ws.init().connect()
@@ -90,7 +89,7 @@ app.ws.request = (payload, cb) => {
   const requestId = ++app.ws.requestId
   app.ws.pendingRequests[requestId] = {
     sendRequest: subscription => {
-      subscription.perform('handle_answer', _.extend({ requestId }, payload))
+      subscription.perform('handle_answer', Object.assign({}, { requestId }, payload))
     },
     handleResponse: cb
   }
@@ -100,15 +99,15 @@ app.ws.request = (payload, cb) => {
 app.ws.sendPendingRequestsIntervalId = null
 app.ws.sendPendingRequests = () => {
   const sendAll = () => {
-    _.each(app.ws.pendingRequests, ({ sendRequest }) =>
+    Object.values(app.ws.pendingRequests).forEach(({ sendRequest }) =>
       app.ws.subscribe(sendRequest)
     )
   }
-  if (_.size(app.ws.pendingRequests) > 0) {
+  if (Object.keys(app.ws.pendingRequests).length > 0) {
     sendAll()
     if (!app.ws.sendPendingRequestsIntervalId) {
       app.ws.sendPendingRequestsIntervalId = setInterval(() => {
-        if (_.size(app.ws.pendingRequests) === 0) {
+        if (Object.keys(app.ws.pendingRequests).length === 0) {
           clearInterval(app.ws.sendPendingRequestsIntervalId)
           app.ws.sendPendingRequestsIntervalId = null
         } else {
