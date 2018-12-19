@@ -37,7 +37,7 @@ app.ws.subscribe = (connectionCb) => {
   const cable = app.ws.init()
 
   if (!app.ws.subscription) {
-    app.ws.subscription = cable.subscriptions.create('StudyChannel', {
+    app.ws.subscription = cable.subscriptions.create('SockemChannel', {
       connected () {
         app.ws.subscriptionConnected = true
         app.ws.callSubscriptionCallbacks()
