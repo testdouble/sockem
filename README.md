@@ -54,7 +54,8 @@ end
 
 You'll want to set up the above `current_user` with some scheme that matches up
 the HTTP session with the channel (see:
-[connection.rb](example/app/channels/sockem_channel.rb) in the example app)
+[connection.rb](example/app/channels/application_cable/connection.rb) in the
+example app)
 
 ## Why?
 
