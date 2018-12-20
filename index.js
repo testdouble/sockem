@@ -41,7 +41,7 @@ app.ws.subscribe = (connectionCb) => {
       connected () {
         app.ws.subscriptionConnected = true
         app.ws.callSubscriptionCallbacks()
-        app.ws.sendPendingRequests()
+        app.ws.schedulePendingRequests()
       },
       disconnected () {
         app.ws.subscriptionConnected = false
@@ -87,35 +87,38 @@ app.ws.requestId = 0
 app.ws.pendingRequests = {}
 app.ws.request = (payload, cb) => {
   const requestId = ++app.ws.requestId
+  const requestCommand = subscription => {
+    subscription.perform('handle_answer', Object.assign({}, { requestId }, payload))
+  }
+
+  app.ws.subscribe(requestCommand)
+
   app.ws.pendingRequests[requestId] = {
-    sendRequest: subscription => {
-      subscription.perform('handle_answer', Object.assign({}, { requestId }, payload))
-    },
+    sendRequest: requestCommand,
     handleResponse: cb
   }
-  app.ws.sendPendingRequests()
+  app.ws.schedulePendingRequests()
 }
 
 app.ws.sendPendingRequestsIntervalId = null
-app.ws.sendPendingRequests = () => {
-  const sendAll = () => {
-    Object.values(app.ws.pendingRequests).forEach(({ sendRequest }) =>
-      app.ws.subscribe(sendRequest)
-    )
-  }
+app.ws.schedulePendingRequests = () => {
   if (Object.keys(app.ws.pendingRequests).length > 0) {
-    sendAll()
     if (!app.ws.sendPendingRequestsIntervalId) {
       app.ws.sendPendingRequestsIntervalId = setInterval(() => {
         if (Object.keys(app.ws.pendingRequests).length === 0) {
           clearInterval(app.ws.sendPendingRequestsIntervalId)
           app.ws.sendPendingRequestsIntervalId = null
         } else {
-          sendAll()
+          app.ws.submitAllPendingRequests()
         }
       }, 3500)
     }
   }
+}
+app.ws.submitAllPendingRequests = () => {
+  Object.values(app.ws.pendingRequests).forEach(({ sendRequest }) =>
+    app.ws.subscribe(sendRequest)
+  )
 }
 
 app.ws.respond = (data) => {
