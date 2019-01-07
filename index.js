@@ -1,4 +1,5 @@
 const ActionCable = require('actioncable')
+const Backoff = require('backo2')
 
 // app.ws - actioncable / websocket
 const app = {}
@@ -100,21 +101,28 @@ app.ws.request = (payload, cb) => {
   app.ws.schedulePendingRequests()
 }
 
-app.ws.sendPendingRequestsIntervalId = null
+app.ws.pendingRequestBackoff = new Backoff({ min: 3500, max: 30000 })
+app.ws.sendPendingRequestsTimeoutId = null
 app.ws.schedulePendingRequests = () => {
   if (Object.keys(app.ws.pendingRequests).length > 0) {
-    if (!app.ws.sendPendingRequestsIntervalId) {
-      app.ws.sendPendingRequestsIntervalId = setInterval(() => {
+    if (!app.ws.sendPendingRequestsTimeoutId) {
+      app.ws.sendPendingRequestsTimeoutId = setTimeout(() => {
+        app.ws.sendPendingRequestsTimeoutId = null
         if (Object.keys(app.ws.pendingRequests).length === 0) {
-          clearInterval(app.ws.sendPendingRequestsIntervalId)
-          app.ws.sendPendingRequestsIntervalId = null
+          app.ws.resetBackoff()
         } else {
           app.ws.submitAllPendingRequests()
+          app.ws.schedulePendingRequests()
         }
-      }, 3500)
+      }, app.ws.pendingRequestBackoff.duration())
     }
   }
 }
+
+app.ws.resetBackoff = () => {
+  app.ws.pendingRequestBackoff.reset()
+}
+
 app.ws.submitAllPendingRequests = () => {
   Object.values(app.ws.pendingRequests).forEach(({ sendRequest }) =>
     app.ws.subscribe(sendRequest)
@@ -127,6 +135,7 @@ app.ws.respond = (data) => {
   if (app.ws.pendingRequests[requestId]) {
     app.ws.pendingRequests[requestId].handleResponse(data)
     delete app.ws.pendingRequests[requestId]
+    app.ws.resetBackoff()
   }
 }
 

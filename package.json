@@ -22,6 +22,7 @@
   "homepage": "https://github.com/testdouble/sockem#readme",
   "devDependencies": {},
   "dependencies": {
-    "actioncable": "^5.2"
+    "actioncable": "^5.2",
+    "backo2": "^1.0.2"
   }
 }
